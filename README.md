@@ -4,7 +4,7 @@ it for the complete deployment, because of that tools like ansible-tower/AWX try
 activity making further assumptions on the way ansible code is stored (versioning repository), the
 way it's executed - certain combinations of inventory/playbook/tag options used to achieve specific
 goals. Having it in mind ansible-deployer may be treated as yet another ansible-playbook wrapper, but
-focused on comprehensive command line intrface and easy YAML based configuration.
+focused on comprehensive command line interface and easy YAML based configuration.
 
 ## Some main fatures are
 - The results of whole excution are logged and saved together with the ansible code state for
