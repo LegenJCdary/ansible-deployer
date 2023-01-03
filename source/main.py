@@ -47,7 +47,7 @@ def parse_options(argv):
     parser.add_argument("--version", "-v", default=False, action="store_true", help='Display'
                             'app version and exit.')
     parser.add_argument("--raw-runner-output", default=False, action="store_true", help='Print'
-                        ' original messages during runner execution instead of formatted ones.')
+                        ' original messages in real time during runner execution.')
     parser.add_argument("--self-setup", nargs=1, default=[None], metavar="LOCAL_SETUP_PATH",
                         help='Setup repo outside of workdir in requested path. This option applies'
                         ' only to infrastructures with allow_user_checkout enabled in infra'
