@@ -8,6 +8,7 @@ import errno
 import pkg_resources
 from ansible_deployer.modules.configs.config import Config
 from ansible_deployer.modules.locking.locking import Locking
+from ansible_deployer.modules.outputs import blocks
 from ansible_deployer.modules.outputs.logging import Loggers
 from ansible_deployer.modules.validators.validate import Validators
 from ansible_deployer.modules.runners.run import Runners
@@ -17,8 +18,7 @@ from ansible_deployer.modules import misc
 from ansible_deployer.modules import globalvars
 
 def parse_options(argv):
-    """Generic function to parse options for all commands, we validate if the option was allowed for
-    specific subcommand outside"""
+    """Generic function to parse options for all commands"""
     parser = argparse.ArgumentParser(add_help=True)
 
     parser.add_argument("subcommand", nargs='*', default=None, metavar="SUBCOMMAND",
@@ -65,8 +65,11 @@ def parse_options(argv):
                         ' (ansible-playbook) with "ansible_deployer_dry_mode" tag, triggering only'
                         ' required variable validation in pre_tasks. This tag is not predefined!')
 
-    arguments = parser.parse_args(argv)
+    return parser.parse_args(argv)
 
+
+def check_options(arguments: argparse.Namespace) -> dict:
+    """Validate parsed options and collect them into dictionary"""
     if arguments.version:
         version = pkg_resources.require("ansible_deployer")[0].version
         print(f"ansible-deployer version: {version}")
@@ -120,7 +123,7 @@ def main():
         print(f"{globalvars.PRINT_FAIL}[CRITICAL]: Too few arguments{globalvars.PRINT_END}",
               file=sys.stderr)
         sys.exit(2)
-    options = parse_options(sys.argv[1:])
+    options = check_options(parse_options(sys.argv[1:]))
 
     logger = Loggers(options)
 
@@ -151,13 +154,7 @@ def main():
     if options["subcommand"] == "show":
         misc.show_deployer(config, options)
     else:
-        inv_file = misc.get_inventory_file(config, options)
-        if not inv_file and options['inventory']:
-            inv_file = options['inventory']
-        elif options['inventory']:
-            logger.logger.info("Ignoring specified inventory file. Using the configured one")
-        else:
-            logger.logger.fatal("No inventory")
+        inv_file = misc.get_inventory_file(config, options, logger.logger)
 
         lockpath = os.path.join(os.path.join(configuration.conf["global_paths"]["work_dir"],
                                 "locks") , inv_file.lstrip(f".{os.sep}").replace(os.sep, "_"))
@@ -180,6 +177,7 @@ def main():
                                                        db_writer)
             if options["lock"]:
                 lock.unlock_inventory(lockpath)
+            blocks.log_exit_messages(logger.logger, log_path, db_path)
             db_writer.finalize_db_write(sequence_record_dict, False)
         elif options["subcommand"] == "lock":
             lock.lock_inventory(lockpath)
